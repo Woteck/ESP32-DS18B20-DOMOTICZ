@@ -92,8 +92,8 @@ void setup() {
     url_t += "&nvalue=0&svalue=";    
     url_t += String(temperature); 
   
-  if (sendToDomoticz(url_t)) {Serial.println("Sent temperature successfully !")};
-  else {Serial.println("Cannot send temperature !")}
+  if (sendToDomoticz(url_t)) {Serial.println("Sent temperature successfully !");}
+  else {Serial.println("Cannot send temperature !");}
   delay(500);
 
 
@@ -108,10 +108,10 @@ void setup() {
     url_m += String(INDEX);
     url_m += "%20Temperature%20";
     url_m += String(temperature);
-    url_m += "%20Sent%20successfully." 
+    url_m += "%20Sent%20successfully.";
   
-  if (sendToDomoticz(url_m)) {Serial.println("Sent log message successfully !")};
-  else {Serial.println("Cannot send log message !")}
+  if (sendToDomoticz(url_m)) {Serial.println("Sent log message successfully !");}
+  else {Serial.println("Cannot send log message !");}
   delay(500);
 
   
@@ -202,10 +202,10 @@ bool sendToDomoticz(String url)
       Serial.println("Domoticz response "); 
       Serial.println(payload);
 
-      return true
+      return true;
       }
     }
-   else {return false}
+   else {return false;}
     
   Serial.println("Closing connection."); // DEBUG
 
