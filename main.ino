@@ -42,10 +42,10 @@ HTTPClient http;
 // ---------- GLOBAL SETUP ---------- 
 void setup() {
 
-  // - Set frequency low for getting temperature.
-  setCpuFrequencyMhz(81); // (doesn't work at 80 Mhz)
-  delay(1000);
-
+  // - Set frequency low for energy economising.
+  setCpuFrequencyMhz(81); // Between 10 and 240 Mhz.
+  delay(100);
+  
   // - Setup debug.
   Serial.begin(115200);
 
@@ -78,14 +78,9 @@ void setup() {
     delay(1000);
   }
 
-  // - Set frequency low for enabling wi-fi.
-  setCpuFrequencyMhz(80);
-  delay(1000);
-
   // - Start WiFi connection.
   setup_wifi();
 
-  
   // Domoticz JSON API 
   // /json.htm?type=command&param=udevice&idx=IDX&nvalue=0&svalue=TEMPERATURE
   // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Temperature
