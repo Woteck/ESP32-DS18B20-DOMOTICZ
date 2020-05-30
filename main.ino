@@ -1,14 +1,14 @@
 // ---------- LIBRARIES ----------
-// measuring libraries.
+// measuring.
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// network libraries.
+// network.
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <PubSubClient.h>
 
-// miscs libraries.
+// miscs.
 #include "driver/adc.h"
 #include <esp_wifi.h>
 #include <esp_bt.h>
@@ -27,13 +27,13 @@ DallasTemperature sensors(&oneWire);
 
 // ---------- NETWORK SETUP ----------
 // WiFi settings
-#define WIFI_SSID "SSID"
-#define WIFI_PASSWORD "PASSWORD"
+#define WIFI_SSID "YOUR_SSID"
+#define WIFI_PASSWORD "YOUR_PASSWORD"
 
 // HTTP Domoticz settings
-const char* host = "HOST";
+const char* host = "YOUR_HOST";
 const int   port = 8080;
-#define INDEX 32 // index API.
+#define INDEX YOUR_INDEX
 HTTPClient http;
 
 // ---------- DEEP_SLEEP SETUP ----------
@@ -42,17 +42,17 @@ HTTPClient http;
 // ---------- GLOBAL SETUP ---------- 
 void setup() {
 
-  // Set frequency low for getting temperature.
-  setCpuFrequencyMhz(81);
+  // - Set frequency low for getting temperature.
+  setCpuFrequencyMhz(81); // (doesn't work at 80 Mhz)
   delay(1000);
 
-  // Setup debug.
+  // - Setup debug.
   Serial.begin(115200);
 
-  // Start ADC.
+  // - Start ADC.
   adc_power_on();          
 
-  // Start sensor(s).
+  // - Start sensor(s).
   sensors.begin();
 
   // - Locate devices on the bus - DEBUG
@@ -72,28 +72,57 @@ void setup() {
 
   // Get the device information.
   float temperature = getTemperature();
-
-  // Checking sensor (-127.00 means that the sensor is not connected).
-  while (temperature == -127.00) {
+  while (temperature == -127.00) { // Checking sensor (-127.00 means that the sensor is not connected).
     Serial.println("Error getting temperature");
     temperature = getTemperature();
     delay(1000);
   }
 
-  // Set frequency low for enabling wi-fi.
+  // - Set frequency low for enabling wi-fi.
   setCpuFrequencyMhz(80);
   delay(1000);
 
-  // Start WiFi connection.
+  // - Start WiFi connection.
   setup_wifi();
+
   
-  // Send information to Domoticz host API.
-  //sendToDomoticz(temperature);
+  // Domoticz JSON API 
+  // /json.htm?type=command&param=udevice&idx=IDX&nvalue=0&svalue=TEMPERATURE
+  // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Temperature
+
+  // - Send temperature to Domoticz host API.
+  // Setup URL for temperature.
+  String url_t = "/json.htm?type=command&param=udevice&idx=";
+    url_t += String(INDEX);
+    url_t += "&nvalue=0&svalue=";    
+    url_t += String(temperature); 
+  
+  if (sendToDomoticz(url_t)) {Serial.println("Sent temperature successfully !")};
+  else {Serial.println("Cannot send temperature !")}
   delay(500);
 
-  Serial.println(temperature);
 
-  // Deep sleep.
+  // Domoticz JSON API 
+  // json.htm?type=command&param=addlogmessage&message=MESSAGE
+  // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Add_a_log_message_to_the_Domoticz_log
+  
+  // - Send log to Domoticz host API.
+  // Setup URL for log. (%20 -> space UTF-8)
+  String url_m = "/json.htm?type=command&param=addlogmessage&message=";  
+    url_m += "ESP32%20INDEX%20";
+    url_m += String(INDEX);
+    url_m += "%20Temperature%20";
+    url_m += String(temperature);
+    url_m += "%20Sent%20successfully." 
+  
+  if (sendToDomoticz(url_m)) {Serial.println("Sent log message successfully !")};
+  else {Serial.println("Cannot send log message !")}
+  delay(500);
+
+  
+  Serial.println(temperature); // Debug
+
+  // - Deep sleep.
   setCpuFrequencyMhz(10); // For minimal purposes.
   goToDeepSleep();
 
@@ -157,18 +186,8 @@ float getTemperature()
   return tempC;
 }
 
-void sendToDomoticz(float temperature)
+bool sendToDomoticz(String url)
 {
-  // Domoticz JSON API 
-  // /json.htm?type=command&param=udevice&idx=IDX&nvalue=0&svalue=TEMP
-  // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Temperature
-
-  // Setup URL.
-  String url = "/json.htm?type=command&param=udevice&idx=";
-    url += String(INDEX);
-    url += "&nvalue=0&svalue=";    
-    url += String(temperature); 
-
   // DEBUG
   Serial.print("Connecting to ");
   Serial.println(host);
@@ -187,8 +206,11 @@ void sendToDomoticz(float temperature)
       // DEBUG
       Serial.println("Domoticz response "); 
       Serial.println(payload);
+
+      return true
       }
     }
+   else {return false}
     
   Serial.println("Closing connection."); // DEBUG
 
